@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>St Hilda's Pure Geography</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4e3c1; /* Earth-tone pale background */
+            color: #4a4a4a;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #9c8c71; /* Natural disaster, earthy tone */
+            padding: 20px;
+            text-align: center;
+            color: #ffffff;
+        }
+        h1 {
+            margin: 0;
+            color: #3e3e3e;
+        }
+        section {
+            padding: 20px;
+        }
+        .hex-grid {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .hex {
+            width: 120px;
+            height: 140px;
+            margin: 5px;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            font-size: 0.9em;
+            text-align: center;
+            cursor: move;
+            position: relative; /* Initially relative to stay within grid */
+        }
+        /* Plate Movements: Dark Color */
+        .plate-movements .hex {
+            background-color: #4a3f35;
+        }
+        /* Tectonic Phenomena: Pale Color */
+        .tectonic-phenomena .hex {
+            background-color: #9c8c71;
+        }
+        /* Hazards: Another distinct color */
+        .hazards .hex {
+            background-color: #c0392b;
+        }
+        /* Natural Impacts: Green Color */
+        .natural-impacts .hex {
+            background-color: #2e7d32;
+        }
+        /* Human Impacts: Blue Color */
+        .human-impacts .hex {
+            background-color: #1e88e5;
+        }
+        footer {
+            background-color: #9c8c71;
+            padding: 10px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .hex:hover {
+            background-color: #a67b54;
+        }
+        .info-category {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .info-category h2 {
+            color: #3e3e3e;
+            padding: 10px;
+        }
+        .drag-space {
+            height: 400px;
+            border: 1px dashed #ddd;
+            background-color: #eae7d6;
+            padding: 20px;
+            margin-top: 20px;
+            position: relative;
+        }
+        .drag-space h2 {
+            text-align: center;
+        }
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        let lastMovedHex = null;
+        const initialPositions = {};
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const hexes = document.querySelectorAll('.hex');
+            const dragSpace = document.querySelector('.drag-space');
+            
+            // Save initial positions
+            hexes.forEach((hex, index) => {
+                initialPositions[index] = {
+                    left: hex.style.left,
+                    top: hex.style.top,
+                    parent: hex.parentElement
+                };
+                hex.dataset.index = index; // Save the index for undo/reset
+                hex.addEventListener('mousedown', dragStart);
+            });
+
+            // Function to reset all hexagons to their original position
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                hexes.forEach((hex, index) => {
+                    resetHex(hex, index);
+                });
+            });
+
+            // Function to undo the last move
+            document.getElementById('undo-btn').addEventListener('click', () => {
+                if (lastMovedHex) {
+                    resetHex(lastMovedHex, lastMovedHex.dataset.index);
+                    lastMovedHex = null; // Clear after undo
+                }
+            });
+
+            // Handle dragging hexagons
+            function dragStart(e) {
+                const hex = e.target;
+                let shiftX = e.clientX - hex.getBoundingClientRect().left;
+                let shiftY = e.clientY - hex.getBoundingClientRect().top;
+
+                lastMovedHex = hex;
+
+                // Change positioning to absolute while dragging
+                hex.style.position = 'absolute';
+                hex.style.zIndex = 1000;
+
+                moveAt(e.pageX, e.pageY);
+
+                function moveAt(pageX, pageY) {
+                    hex.style.left = pageX - shiftX + 'px';
+                    hex.style.top = pageY - shiftY + 'px';
+                }
+
+                function onMouseMove(e) {
+                    moveAt(e.pageX, e.pageY);
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+
+                hex.onmouseup = function () {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    hex.onmouseup = null;
+                };
+
+                // Return hex to its original position when 'Delete' is pressed
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Delete') {
+                        resetHex(hex, hex.dataset.index);
+                    }
+                });
+            }
+
+            // Prevent default drag behavior
+            hexes.forEach(hex => hex.ondragstart = () => false);
+        });
+
+        // Function to reset hexagon to its initial position
+        function resetHex(hex, index) {
+            const initialPosition = initialPositions[index];
+            hex.style.left = initialPosition.left || 'initial';
+            hex.style.top = initialPosition.top || 'initial';
+            hex.style.position = 'relative'; // Return to normal positioning
+            initialPosition.parent.appendChild(hex); // Move hex back to its original parent
+        }
+    </script>
+</head>
+<body>
+
+<header>
+    <h1>St Hilda's Pure Geography</h1>
+    <p>Explore Plate Tectonics through Interactive Hexagons</p>
+</header>
+
+<section>
+    <div class="info-category plate-movements">
+        <h2>Plate Movements</h2>
+        <div class="hex-grid">
+            <div class="hex">Converging</div>
+            <div class="hex">Diverging</div>
+            <div class="hex">Transform</div>
+        </div>
+    </div>
+
+    <div class="info-category tectonic-phenomena">
+        <h2>Tectonic Phenomena</h2>
+        <div class="hex-grid">
+            <div class="hex">Fold Mountains</div>
+            <div class="hex">Earthquakes</div>
+            <div class="hex">Volcanoes</div>
+            <div class="hex">Tsunami</div>
+            <div class="hex">Submarine Volcanoes</div>
+            <div class="hex">Rift Valley</div>
+            <div class="hex">Mid-Oceanic Ridge</div>
+        </div>
+    </div>
+
+    <div class="info-category hazards">
+        <h2>Hazards</h2>
+        <div class="hex-grid">
+            <div class="hex">Tephra</div>
+            <div class="hex">Volcanic Gases</div>
+            <div class="hex">Pyroclastic Flows</div>
+            <div class="hex">Volcanic Landslide</div>
+            <div class="hex">Ground Shaking</div>
+            <div class="hex">Liquefaction</div>
+            <div class="hex">Tsunamis</div>
+        </div>
+    </div>
+
+    <div class="info-category impacts">
+        <h2>Impacts</h2>
+        <div class="hex-grid natural-impacts">
+            <h3>Natural Impacts</h3>
+            <div class="hex">Uproot Trees</div>
+            <div class="hex">Damage to Wildlife Habitats</div>
+            <div class="hex">Tree Sinking into Soil</div>
+            <div class="hex">Burial of Villages and Farms</div>
+            <div class="hex">Burial of Forests and Wetlands</div>
+            <div class="hex">River Flooding</div>
+            <div class="hex">Coastal Flooding of Forests and Wetlands</div>
+            <div class="hex">Debris Pollution</div>
+            <div class="hex">Damaging Ecosystems</div>
+            <div class="hex">Fast-Moving Waters</div>
+            <div class="hex">Suffocate and Kill Wildlife</div>
+            <div class="hex">Thick Mud Covers Forests and Ecosystems</div>
+        </div>
+        <div class="hex-grid human-impacts">
+            <h3>Human Impacts</h3>
+            <div class="hex">Ruptures Oil and Chemical Factories</div>
+            <div class="hex">Chemical Pollution of Water Bodies</div>
+            <div class="hex">Collapse of Buildings and Bridges</div>
+            <div class="hex">Isolating People from Emergency Aid</div>
+            <div class="hex">Water Shortage</div>
+            <div class="hex">People Trapped under Buildings</div>
+            <div class="hex">Buildings and Infrastructure Swept Away</div>
+            <div class="hex">Disruption of Air Transport</div>
+        </div>
+    </div>
+
+    <div class="drag-space">
+        <h2>Drag Space for Hexagons</h2>
+    </div>
+</section>
+
+<!-- Buttons for reset and undo functionality -->
+<button id="reset-btn">Reset All</button>
+<button id="undo-btn">Undo Last Move</button>
+
+<footer>
+    <p>&copy; 2024 St Hilda's Pure Geography. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
